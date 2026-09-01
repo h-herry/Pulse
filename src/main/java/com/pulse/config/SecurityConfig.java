@@ -79,8 +79,11 @@ public class SecurityConfig {
                 // 前端由 Vue（产物在 /assets/**）换为 Next 后必须放行，否则整站白屏（403）。
                 // 注意：Spring PathPattern 不允许 ** 之后再有内容（/**/*.txt 会抛
                 // PatternParseException），故 .txt 用正则匹配器放行。
+                // 关键：浏览器拉取 RSC 飞行数据必带 ?_rsc=<hash> 查询参数，正则须容忍
+                // 查询串，否则带参请求不匹配 → 被 anyRequest().authenticated() 拦成 403，
+                // 导致客户端软导航（点链接切换页面）失败、前端报「网络失败」。
                 .requestMatchers("/_next/**").permitAll()
-                .requestMatchers(RegexRequestMatcher.regexMatcher(".*\\.txt")).permitAll()
+                .requestMatchers(RegexRequestMatcher.regexMatcher(".*\\.txt.*")).permitAll()
                 // SPA 深链的转发目标：SpaController 会把 /board 转给 /board/index.html。
                 // Spring Security 6 默认同时过滤 FORWARD 派发，若不放行转发目标，
                 // 深链会被 anyRequest().authenticated() 拦成 403。
