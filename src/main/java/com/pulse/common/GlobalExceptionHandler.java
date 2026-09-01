@@ -55,11 +55,11 @@ public class GlobalExceptionHandler {
      * @return HTTP 400 失败响应，message 为各字段校验信息拼接
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Result<Void> handleValidation(MethodArgumentNotValidException e) {
+    public ResponseEntity<Result<Void>> handleValidation(MethodArgumentNotValidException e) {
         String msg = e.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining("; "));
-        return Result.fail(400, msg);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.fail(400, msg));
     }
 
     /**
@@ -70,8 +70,9 @@ public class GlobalExceptionHandler {
      * @return HTTP 500 失败响应
      */
     @ExceptionHandler(Exception.class)
-    public Result<Void> handleAll(Exception e) {
+    public ResponseEntity<Result<Void>> handleAll(Exception e) {
         log.error("Unexpected error", e);
-        return Result.fail(500, "服务器内部错误");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Result.fail(500, "服务器内部错误"));
     }
 }

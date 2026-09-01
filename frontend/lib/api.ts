@@ -107,21 +107,26 @@ async function request<T>(
     signal: options.signal,
   });
 
-  // 网络层/HTTP 层错误
-  if (!res.ok) {
-    if (res.status === 401) handleUnauthorized();
-    throw new ApiError(res.status, `请求失败（HTTP ${res.status}）`);
+  // 统一解析响应信封：无论 HTTP 状态如何都先尝试从 body 取业务码与消息，
+  // 以便「系统异常返回 HTTP 500 + body.code」时仍能拿到原始错误文案，而非泛化提示。
+  let envelope: ApiResponse<T> | null = null;
+  try {
+    envelope = (await res.json()) as ApiResponse<T>;
+  } catch {
+    envelope = null;
   }
 
-  const envelope = (await res.json()) as ApiResponse<T>;
-
-  // 业务层：后端统一用 HTTP 200 + body.code 表达状态
-  if (envelope && envelope.code && envelope.code !== 200) {
-    if (envelope.code === 401) handleUnauthorized();
-    throw new ApiError(envelope.code, envelope.message || "请求失败");
+  // 成功：HTTP 2xx 且业务码为 200
+  if (res.ok && envelope && envelope.code === 200) {
+    return envelope.data;
   }
 
-  return envelope.data;
+  // 失败：优先使用 body 中的业务码/消息；网络层无 body 时回退到 HTTP 状态
+  const code = envelope && envelope.code ? envelope.code : res.status;
+  const message =
+    envelope && envelope.message ? envelope.message : `请求失败（HTTP ${res.status}）`;
+  if (code === 401 || res.status === 401) handleUnauthorized();
+  throw new ApiError(code, message);
 }
 
 export const api = {
