@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/pulse_test?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema-drop.sql, classpath:db/schema.sql
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+  task:
+    scheduling:
+      enabled: false
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      insert-strategy: not_null
+      update-strategy: not_null
+
+jwt:
+  secret: test-secret-key-for-integration-tests-only-0123456789abcdef
+  expiration: 86400000
+
+# 集成测试中关闭限流，避免回环 IP 在共享上下文内累计请求触发 429 干扰用例
+app:
+  rate-limit:
+    enabled: false
+
+logging:
+  level:
+    com.pulse: INFO
+    org.springframework.security: WARN

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    # 集成测试依赖本地 MySQL（application-test.yml 连接 root/root 的 pulse_test）
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Validate docker-compose configuration
+        # 仅解析校验 compose 文件语法与变量插值；缺失的环境变量解析为空，不影响校验
+        run: docker compose config -q
+
+      - name: Build and test
+        run: |
+          # EncryptionUtil 在缺失主密钥时 fail-fast：CI 用临时随机 32 字节密钥，不用于生产
+          export PULSE_ENCRYPTION_KEY=$(openssl rand -hex 32)
+          mvn -B -ntp test

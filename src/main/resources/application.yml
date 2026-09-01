@@ -1,0 +1,127 @@
+server:
+  port: 8080
+  # 经反向代理（nginx）终止 TLS 后，由转发头还原真实协议/客户端 IP，
+  # 否则 request.isSecure() 恒为 false，刷新令牌的 Secure Cookie 标志会失效。
+  forward-headers-strategy: native
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,text/javascript,application/javascript,application/json,image/svg+xml
+    min-response-size: 1024
+
+spring:
+  application:
+    name: pulse
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 20MB
+  datasource:
+    # 凭据不再提供默认弱口令：缺失即启动失败（fail-fast），避免 root/root 裸奔上线
+    url: ${DATASOURCE_URL:jdbc:mysql://localhost:3306/pulse?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:always}
+      schema-locations: classpath:db/schema.sql
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+  # SMTP（仅当 app.mail.enabled=true 且提供 host 时实际发信；其余情况 MailService 降级为日志）
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      # 实体字段为 null 时省略该列，由数据库 DEFAULT / ON UPDATE 生效（避免显式 NULL 触发 NOT NULL 约束）
+      insert-strategy: not_null
+      update-strategy: not_null
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    # 生产默认关闭 API 文档（SWAGGER_ENABLED=true 才开启，仅用于开发/联调）
+    enabled: ${SWAGGER_ENABLED:false}
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SWAGGER_ENABLED:false}
+
+# JWT Configuration
+# 注意：无默认值，缺失即启动失败（fail-fast）。历史上默认口令为公开字符串，可被用于伪造任意用户令牌。
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
+  # 刷新令牌：仅写入 HttpOnly+Secure+SameSite=Strict Cookie，用于无感恢复会话
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+  # 刷新令牌 Cookie 的 Secure 标志：默认 true（仅 HTTPS 下发），不再依赖 request.isSecure() 推断；
+  # 仅本地 http 调试可显式设为 false，生产切勿关闭。
+  refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:true}
+
+# CORS — 前端开发/生产域名，逗号分隔；部署时通过环境变量覆盖
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+
+# AI（per-user 自带 Key 模式）
+# - 全局不再预置任何 api-key（数据主权归用户）；用户在前端个人设置中填写自己的 LLM Key。
+# - base-url / model 作为用户未显式填写时的服务端缺省值，可用环境变量覆盖。
+ai:
+  base-url: ${AI_BASE_URL:https://api.openai.com/v1}
+  model: ${AI_MODEL:gpt-4o-mini}
+
+# 用户 LLM Key 加密主密钥（AES-256-GCM）。缺失则 AI 配置无法安全存储（服务启动报错并拒绝落库）。
+# 建议用 64 位十六进制（32 字节）或 Base64 编码的 32 字节随机值，通过环境变量注入，勿提交到仓库。
+pulse:
+  encryption-key: ${PULSE_ENCRYPTION_KEY:}
+
+# File upload（容器内部持久路径，由 docker-compose 挂载卷）
+app:
+  upload:
+    dir: ${APP_UPLOAD_DIR:uploads}
+  # 事务邮件（密码重置等）投递配置
+  # enabled=false 或未配置 SMTP 时，重置链接仅记服务端日志（MVP/本地开发），不阻断启动与主流程。
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@pulse.local}
+    # 拼接重置邮件中的绝对链接（/reset-password?token=... 需补全为可点击的完整地址）
+    frontend-base-url: ${MAIL_FRONTEND_BASE_URL:http://localhost:5173}
+
+# Logging
+logging:
+  level:
+    com.pulse: INFO
+    org.springframework.security: INFO
+
+# Actuator：仅暴露健康检查，供编排/负载均衡探活
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+  health:
+    # 邮件未配置（默认 MAIL_ENABLED=false，MailService 降级为记日志）时关闭邮件健康指示器，
+    # 否则 MailHealthIndicator 会因连不上 SMTP 把整体 health 拖成 DOWN（503），
+    # 导致 docker-compose / k8s 探针误判容器不健康。
+    mail:
+      enabled: ${MAIL_ENABLED:false}

@@ -1,0 +1,346 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* 使用 class 策略切换深色（而非仅系统偏好），便于用户在应用内手动切换 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   Pulse 脉搏 · 设计系统「Apple Clean」
+   气质：纯白画布、大留白、发丝级边框、柔和分层阴影、毛玻璃 chrome
+   浅色为主（primary），深色为精致镜像
+   ============================================================ */
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Inter,
+    system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---- 排版尺度 ---- */
+  --text-display: 2rem;      /* 32px 页面主标题 */
+  --text-title: 1.5rem;      /* 24px 区块标题 */
+  --text-h3: 1.125rem;       /* 18px */
+  --text-body: 0.9375rem;    /* 15px 正文 */
+  --text-sm: 0.8125rem;      /* 13px 次要/导航 */
+  --text-xs: 0.75rem;        /* 12px 元数据/徽章 */
+
+  /* ---- 圆角 ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;   /* 卡片、按钮 */
+  --radius-lg: 16px;   /* 面板、popover */
+  --radius-xl: 20px;   /* 弹窗 */
+  --radius-full: 999px;
+
+  /* ============================================================
+     浅色主题（默认 / primary）
+     ============================================================ */
+  --canvas: #ffffff;          /* 应用画布 */
+  --canvas-subtle: #f5f5f7;   /* 苹果灰，用于页面底色分区 */
+  --surface: #ffffff;         /* 卡片表面 */
+  --surface-2: #fafafa;       /* 次级表面：列底、行 hover */
+  --surface-3: #f0f0f3;       /* 三级表面：输入框、chip */
+  --hairline: #e8e8ed;        /* 发丝边框 */
+  --border-strong: #d2d2d7;
+
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-muted: #a1a1a6;
+  --text-inverse: #ffffff;
+
+  /* 强调色（品牌主色）：苹果蓝 #0071E3
+     品牌色调于 2026-08-30 由「脉搏青绿」切换为苹果蓝，与「纯白·极简留白」气质统一。
+     深色主题下切到更亮的 #2997FF，保证深底上的对比度。 */
+  --accent: #0071e3;
+  --accent-hover: #0064c8;
+  --accent-active: #00539f;
+  --accent-soft: rgba(0, 113, 227, 0.10);
+  --accent-soft-hover: rgba(0, 113, 227, 0.16);
+  --accent-ring: rgba(0, 113, 227, 0.28);
+  /* 品牌深色变体：深色底上的品牌块、图表深色系列 */
+  --brand-deep: #00408f;
+
+  /* 状态色（与列头/徽章/报表图例同源） */
+  --status-todo: #8e8e93;   --status-todo-soft: rgba(142, 142, 147, 0.12);
+  --status-doing: #007aff;  --status-doing-soft: rgba(0, 122, 255, 0.10);
+  --status-review: #ff9500; --status-review-soft: rgba(255, 149, 0, 0.12);
+  --status-done: #34c759;   --status-done-soft: rgba(52, 199, 89, 0.12);
+
+  /* 优先级 P0–P5 */
+  --prio-p0: #ff3b30; --prio-p0-soft: rgba(255, 59, 48, 0.10);
+  --prio-p1: #ff9500; --prio-p1-soft: rgba(255, 149, 0, 0.10);
+  --prio-p2: #ffcc00; --prio-p2-soft: rgba(255, 204, 0, 0.14);
+  --prio-p3: #007aff; --prio-p3-soft: rgba(0, 122, 255, 0.10);
+  --prio-p4: #5ac8fa; --prio-p4-soft: rgba(90, 200, 250, 0.12);
+  --prio-p5: #34c759; --prio-p5-soft: rgba(52, 199, 89, 0.10);
+
+  /* 语义色 */
+  --success: #34c759; --success-soft: rgba(52, 199, 89, 0.10);
+  --warning: #ff9500; --warning-soft: rgba(255, 149, 0, 0.12);
+  --danger: #ff3b30;  --danger-soft: rgba(255, 59, 48, 0.10);
+  --info: #007aff;    --info-soft: rgba(0, 122, 255, 0.10);
+
+  /* 柔和分层阴影（非扁平：低透明度 + 大扩散） */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-focus: 0 0 0 3px var(--accent-ring);
+
+  /* 毛玻璃：顶栏 / 侧边栏 / 浮层 */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --glass-blur: blur(20px) saturate(180%);
+
+  /* 布局度量 */
+  --sidebar-w: 240px;
+  --topbar-h: 56px;
+}
+
+/* ============================================================
+   深色主题（精致镜像：锌灰 + 保留毛玻璃与柔光）
+   ============================================================ */
+.dark {
+  --canvas: #0b0b0d;
+  --canvas-subtle: #101013;
+  --surface: #17171a;
+  --surface-2: #1c1c20;
+  --surface-3: #242429;
+  --hairline: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-muted: #7c7c85;
+  --text-inverse: #0b0b0d;
+
+  /* 深色下的品牌蓝：用 Apple 的亮蓝 #2997FF 而非 #0071E3，
+     否则在锌灰深底上对比度不足、观感发闷。 */
+  --accent: #2997ff;
+  --accent-hover: #47a9ff;
+  --accent-active: #0a84ff;
+  --accent-soft: rgba(41, 151, 255, 0.16);
+  --accent-soft-hover: rgba(41, 151, 255, 0.24);
+  --accent-ring: rgba(41, 151, 255, 0.32);
+  --brand-deep: #0071e3;
+
+  --status-todo: #8e8e93;   --status-todo-soft: rgba(142, 142, 147, 0.16);
+  --status-doing: #0a84ff;  --status-doing-soft: rgba(10, 132, 255, 0.16);
+  --status-review: #ff9f0a; --status-review-soft: rgba(255, 159, 10, 0.16);
+  --status-done: #30d158;   --status-done-soft: rgba(48, 209, 88, 0.16);
+
+  --prio-p0: #ff453a; --prio-p0-soft: rgba(255, 69, 58, 0.16);
+  --prio-p1: #ff9f0a; --prio-p1-soft: rgba(255, 159, 10, 0.16);
+  --prio-p2: #ffd60a; --prio-p2-soft: rgba(255, 214, 10, 0.16);
+  --prio-p3: #0a84ff; --prio-p3-soft: rgba(10, 132, 255, 0.16);
+  --prio-p4: #64d2ff; --prio-p4-soft: rgba(100, 210, 255, 0.16);
+  --prio-p5: #30d158; --prio-p5-soft: rgba(48, 209, 88, 0.16);
+
+  --success: #30d158; --success-soft: rgba(48, 209, 88, 0.16);
+  --warning: #ff9f0a; --warning-soft: rgba(255, 159, 10, 0.16);
+  --danger: #ff453a;  --danger-soft: rgba(255, 69, 58, 0.16);
+  --info: #0a84ff;    --info-soft: rgba(10, 132, 255, 0.16);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.50);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.60);
+  --shadow-focus: 0 0 0 3px var(--accent-ring);
+
+  --glass-bg: rgba(22, 22, 26, 0.72);
+  --glass-bg-strong: rgba(22, 22, 26, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-blur: blur(20px) saturate(160%);
+}
+
+/* ============================================================
+   Tailwind v4 主题映射（@theme inline 引用运行时变量以支持主题切换）
+   ============================================================ */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --color-canvas: var(--canvas);
+  --color-canvas-subtle: var(--canvas-subtle);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-hairline: var(--hairline);
+  --color-line-strong: var(--border-strong);
+
+  --color-fg: var(--text-primary);
+  --color-fg-secondary: var(--text-secondary);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-inverse: var(--text-inverse);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-hover: var(--accent-soft-hover);
+  --color-brand-deep: var(--brand-deep);
+
+  --color-todo: var(--status-todo);
+  --color-todo-soft: var(--status-todo-soft);
+  --color-doing: var(--status-doing);
+  --color-doing-soft: var(--status-doing-soft);
+  --color-review: var(--status-review);
+  --color-review-soft: var(--status-review-soft);
+  --color-done: var(--status-done);
+  --color-done-soft: var(--status-done-soft);
+
+  --color-p0: var(--prio-p0); --color-p0-soft: var(--prio-p0-soft);
+  --color-p1: var(--prio-p1); --color-p1-soft: var(--prio-p1-soft);
+  --color-p2: var(--prio-p2); --color-p2-soft: var(--prio-p2-soft);
+  --color-p3: var(--prio-p3); --color-p3-soft: var(--prio-p3-soft);
+  --color-p4: var(--prio-p4); --color-p4-soft: var(--prio-p4-soft);
+  --color-p5: var(--prio-p5); --color-p5-soft: var(--prio-p5-soft);
+
+  --color-success: var(--success); --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning); --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);   --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);       --color-info-soft: var(--info-soft);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+}
+
+/* ============================================================
+   基础层
+   ============================================================ */
+@layer base {
+  * {
+    border-color: var(--hairline);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+
+  /* 焦点：仅键盘可见的柔光环 */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background: var(--accent-soft-hover);
+  }
+
+  /* 细滚动条，减少视觉噪音 */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+    background-clip: content-box;
+  }
+}
+
+/* ============================================================
+   复用工具类
+   ============================================================ */
+@utility glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-color: var(--glass-border);
+}
+
+@utility glass-strong {
+  background-color: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-color: var(--glass-border);
+}
+
+/* 卡片：白面 + 发丝边 + 柔和阴影（悬停微抬升，苹果惯用的克制动效） */
+@utility card {
+  background-color: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 200ms cubic-bezier(0.32, 0.72, 0, 1),
+              transform 200ms cubic-bezier(0.32, 0.72, 0, 1),
+              border-color 200ms ease;
+}
+
+@utility card-interactive {
+  background-color: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  transition: box-shadow 200ms cubic-bezier(0.32, 0.72, 0, 1),
+              transform 200ms cubic-bezier(0.32, 0.72, 0, 1),
+              border-color 200ms ease;
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+}
+
+/* 通用动效曲线（苹果 ease-out-expo 近似） */
+@utility easing-apple {
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@utility fade-in {
+  animation: fadeIn 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 骨架微光 */
+@utility shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 37%,
+    var(--surface-2) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}

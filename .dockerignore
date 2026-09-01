@@ -1,0 +1,13 @@
+frontend/node_modules
+frontend/dist
+node_modules
+target
+.idea
+.git
+.gitignore
+.workbuddy
+*.md
+docs
+uploads
+**/.DS_Store
+.env

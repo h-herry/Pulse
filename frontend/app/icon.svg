@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Pulse 脉搏 · 站点图标：与 components/shell/PulseLogo.tsx 同源配色 -->
+  <rect width="512" height="512" rx="96" ry="96" fill="#0071E3" />
+  <polyline
+    points="56,280 140,280 190,140 256,360 320,180 370,300 420,280 456,280"
+    fill="none" stroke="#FFFFFF" strokeWidth="28" strokeLinecap="round" strokeLinejoin="round" />
+  <circle cx="256" cy="360" r="18" fill="#F9D342" />
+</svg>

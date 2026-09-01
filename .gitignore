@@ -1,0 +1,19 @@
+# 依赖 / 构建产物
+frontend/node_modules/
+frontend/dist/
+frontend/out/
+src/main/resources/static/
+target/
+node_modules/
+
+# 运行时数据（用户上传的附件；容器内由 pulse-uploads 卷挂载，不入库）
+uploads/
+
+# 密钥 / 本地环境
+.env
+*.local
+
+# IDE / 系统
+.idea/
+*.iml
+.DS_Store
