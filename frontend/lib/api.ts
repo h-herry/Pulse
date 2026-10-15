@@ -243,7 +243,7 @@ export const taskApi = {
     api.put<import("./types").Task>(`/tasks/${id}`, data),
   patch: (id: number, data: Partial<import("./types").Task>) =>
     api.patch<import("./types").Task>(`/tasks/${id}`, data),
-  move: (id: number, data: { boardColumnId?: number; status?: string; sortOrder?: number }) =>
+  move: (id: number, data: { targetColumnId: number; afterTaskId?: number | null }) =>
     api.put<import("./types").Task>(`/tasks/${id}/move`, data),
   remove: (id: number) => api.del<void>(`/tasks/${id}`),
   batchUpdate: (taskIds: number[], updates: Record<string, unknown>) =>
@@ -258,7 +258,12 @@ export const taskApi = {
 
 export const commentApi = {
   list: (taskId: number, page = 1, size = 20) =>
-    api.get<import("./types").TaskComment[]>(`/tasks/${taskId}/comments`, { page, size }),
+    api
+      .get<{ records: import("./types").TaskComment[]; total: number }>(
+        `/tasks/${taskId}/comments`,
+        { page, size }
+      )
+      .then((p) => (Array.isArray(p) ? p : p?.records ?? [])),
   create: (taskId: number, data: { content: string; mentions?: number[] }) =>
     api.post<import("./types").TaskComment>(`/tasks/${taskId}/comments`, data),
   remove: (taskId: number, commentId: number) =>
@@ -337,6 +342,13 @@ export const notificationApi = {
 
 export const adminApi = {
   users: () => api.get<import("./types").User[]>("/admin/users"),
+  /** 管理员新增用户（返回新建的 User） */
+  createUser: (data: {
+    email: string;
+    displayName: string;
+    password: string;
+    role?: "user" | "admin";
+  }) => api.post<import("./types").User>("/admin/users", data),
   teams: () => api.get<import("./types").Team[]>("/admin/teams"),
   projects: () => api.get<import("./types").Project[]>("/admin/projects"),
   archivedProjects: () => api.get<import("./types").Project[]>("/admin/projects/archived"),

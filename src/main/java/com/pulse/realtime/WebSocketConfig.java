@@ -1,6 +1,9 @@
 package com.pulse.realtime;
 
 import com.pulse.realtime.RealtimeChannelInterceptor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -35,7 +38,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOrigins(allowedOrigins).withSockJS();
+        // 允许配置的跨域源；同时放行同源（自托管：localhost / 127.0.0.1 任意端口），
+        // 否则前端与后端同域部署时 WebSocket 握手会被 allowedOrigins 拒绝。
+        String[] wsAllowed = Arrays.copyOf(allowedOrigins, allowedOrigins.length + 2);
+        wsAllowed[allowedOrigins.length] = "http://localhost:*";
+        wsAllowed[allowedOrigins.length + 1] = "http://127.0.0.1:*";
+        registry.addEndpoint("/ws").setAllowedOriginPatterns(wsAllowed).withSockJS();
     }
 
     /**

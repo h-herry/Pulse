@@ -100,6 +100,10 @@ public class SecurityConfig {
                         "/overview/", "/my-tasks/", "/board/", "/iterations/", "/reports/",
                         "/timeline/", "/team/", "/members/", "/admin/", "/settings/", "/onboarding/"
                 ).permitAll()
+                // SPA 兜底：放行所有非 /api、/ws、/uploads 且不带文件后缀的 GET 路径，
+                // 与 SpaController 的 catch-all 配合，避免未知/未来路由直链被 anyRequest 拦成 403。
+                // 转发目标 /xxx/index.html 已由上一条 /*/index.html 放行，此处放行的是原始请求路径。
+                .requestMatchers(new RegexRequestMatcher("^(?!/api/)(?!/ws/)(?!/uploads/)(?!.*\\.).*$", "GET", false)).permitAll()
                 .anyRequest().authenticated();
             })
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

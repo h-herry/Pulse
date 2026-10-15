@@ -35,6 +35,7 @@ public class AuditLog {
         public static final String ADMIN_RESET_PASSWORD = "ADMIN_RESET_PASSWORD";
         public static final String ADMIN_USER_PROFILE = "ADMIN_USER_PROFILE";
         public static final String ADMIN_USER_ROLE = "ADMIN_USER_ROLE";
+        public static final String ADMIN_USER_CREATE = "ADMIN_USER_CREATE";
         public static final String ADMIN_MOVE_MEMBER_TEAM = "ADMIN_MOVE_MEMBER_TEAM";
 
         // —— AI 能力（用户输入 Key，per-user）——

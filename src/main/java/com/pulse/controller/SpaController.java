@@ -61,4 +61,19 @@ public class SpaController {
         }
         return "forward:" + path + "/index.html";
     }
+
+    /**
+     * 兜底转发：覆盖未被上方枚举的合法路由（未来新增页面、深链、动态段），
+     * 转发到该路径自己的 index.html，避免落到 Spring Security 返回 403 白屏。
+     *
+     * <p>正则排除：含文件后缀（.js/.css/.ico…）的路径，以及 api/ws/uploads/static/
+     * assets/_next/actuator/v3/swagger 等前缀，确保静态资源与接口不受影响。
+     * 已枚举的路由由更具体的映射优先匹配，不会与本方法冲突。
+     */
+    @GetMapping("/{path:^(?!.*\\.)(?!api|ws|uploads|assets|static|_next|actuator|v3|swagger).*$}")
+    public String forwardCatchAll() {
+        // 未知/未来路由回落到根 index.html（SPA 外壳），由前端客户端路由决定渲染或 404，
+        // 避免转发到不存在的 <path>/index.html 导致 500。已枚举路由由更具体的映射优先匹配。
+        return "forward:/index.html";
+    }
 }

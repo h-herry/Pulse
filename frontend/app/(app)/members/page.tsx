@@ -7,11 +7,10 @@ import { toast } from "sonner";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/avatar";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState, NoResults } from "@/components/ui/empty-state";
-import { adminApi } from "@/lib/api";
+import { adminApi, teamApi } from "@/lib/api";
 import { useContextStore } from "@/store/context";
 import { useAuthStore } from "@/store/auth";
 import type { TeamMember } from "@/lib/types";
@@ -47,6 +46,16 @@ export default function MembersPage() {
       void queryClient.invalidateQueries({ queryKey: ["members"] });
     },
     onError: (e: Error) => toast.error(e.message || "调配失败"),
+  });
+
+  const updateRole = useMutation({
+    mutationFn: (args: { userId: number; teamId: number; role: string }) =>
+      teamApi.updateMember(args.teamId, args.userId, { role: args.role }),
+    onSuccess: () => {
+      toast.success("团队角色已更新");
+      void queryClient.invalidateQueries({ queryKey: ["admin-members"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "更新失败"),
   });
 
   if (!isAdmin) {
@@ -125,9 +134,22 @@ export default function MembersPage() {
                   <p className="truncate text-[12px] text-fg-muted">{m.email}</p>
                 </div>
 
-                <Badge tone={m.role === "LEAD" ? "accent" : "neutral"} size="sm">
-                  {m.role}
-                </Badge>
+                <div className="w-24 shrink-0">
+                  <Select
+                    value={m.role}
+                    onChange={(e) =>
+                      updateRole.mutate({
+                        userId: m.userId,
+                        teamId: m.teamId,
+                        role: e.target.value,
+                      })
+                    }
+                    aria-label="设置团队角色"
+                  >
+                    <option value="LEAD">组长</option>
+                    <option value="USER">成员</option>
+                  </Select>
+                </div>
 
                 <div className="w-40 shrink-0">
                   <Select

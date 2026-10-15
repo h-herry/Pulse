@@ -74,6 +74,8 @@ docker compose up -d --build
 cd frontend && npm ci && npm run dev
 ```
 
+> 开发期把前后端拆开运行，仅为了前端热更新与独立调试；它**不是**部署形态。生产部署形态见「一体化构建」与上方「运行时是否需要先启动 Node.js 前端」——实际只需一个 Jar。
+
 ### 一体化构建（产出单 JAR）
 
 ```bash
@@ -81,6 +83,27 @@ cd frontend && npm ci && npm run dev
 # 产物：target/pulse-1.0.0.jar（内含前端静态资源）
 SKIP_FRONTEND=1 ./scripts/build.sh # 仅打包后端
 ```
+
+### 💡 运行时是否需要先启动 Node.js 前端？
+
+**不需要。** 前端并非在运行时由 Node 服务托管，而是**预构建为静态资源后内嵌进 Jar**：
+
+1. **构建期**：`scripts/build.sh` 先执行 `npm ci && npm run build`，把 Next.js 的静态导出产物（`frontend/out`）同步进 `src/main/resources/static/`；
+2. **打包期**：`mvn package` 将 `static/` 打进 `target/pulse-1.0.0.jar`（路径 `BOOT-INF/classes/static/`，含约 187 个文件：`index.html`、`/_next/static/chunks/*` 等）；
+3. **运行期**：Spring Boot 内嵌 Tomcat 直接以静态资源方式托管这些文件：
+   - `GET /` → 返回 `index.html`；
+   - `GET /_next/*`、`/assets/*` → `ResourceHttpRequestHandler` 返回对应静态文件；
+   - SPA 深链（如 `/projects/123`）由 `SpaController` 转发回 `index.html`；
+   - 后端 API 在 `/api/v1`，与静态资源同源同端口，无需跨域、无需独立前端服务。
+
+因此**生产部署只需运行一个 Java 进程**：
+
+```bash
+java -jar target/pulse-1.0.0.jar --spring.profiles.active=prod
+# 浏览器直接访问 http://<host>:8080/ 即可，无任何 Node 进程
+```
+
+**Node.js 只在「改了前端代码、需要重新构建」时才需要**（见上方一体化构建）。构建完成后，部署、重启、扩容都只用这个 Jar。开发期把前端拆成独立 dev server（见方式二）只是图方便，并非部署要求。
 
 ---
 
@@ -123,6 +146,7 @@ SKIP_FRONTEND=1 ./scripts/build.sh # 仅打包后端
 - 上传目录已挂载 `pulse-uploads` 卷，容器重建不丢文件。
 - 数据库已挂载 `pulse-db` 卷；`schema.sql` 幂等，可重复启动。
 - 生产务必提供真实 TLS 证书，并修改初始管理员口令。
+- 生产运行**只需 Jar、无需 Node.js**（前端静态资源已内嵌）；仅在重新构建前端时才需要 Node 环境。
 
 ---
 

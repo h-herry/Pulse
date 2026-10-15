@@ -100,8 +100,8 @@ export default function BoardPage() {
   const columns: ColumnsState = override ?? derived;
 
   const moveMutation = useMutation({
-    mutationFn: (args: { id: number; boardColumnId: number; sortOrder: number }) =>
-      taskApi.move(args.id, { boardColumnId: args.boardColumnId, sortOrder: args.sortOrder }),
+    mutationFn: (args: { id: number; targetColumnId: number; afterTaskId: number | null }) =>
+      taskApi.move(args.id, { targetColumnId: args.targetColumnId, afterTaskId: args.afterTaskId }),
     onError: (e: Error) => {
       toast.error(e.message || "移动失败");
       void refetch();
@@ -189,12 +189,14 @@ export default function BoardPage() {
       return;
     }
 
-    // 落库：目标列 + 新顺序（sortOrder 用 1000 步长，便于后续插入）
+    // 落库：目标列 + 新顺序。afterTaskId 指向移动后紧邻「其前」的卡片（null=置于列首），
+    // 与后端 TaskMoveRequest 契约一致（targetColumnId 必填，避免「不能为null」校验失败）。
     const finalIdx = next.findIndex((t) => t.id === activeId);
+    const afterId = finalIdx > 0 ? next[finalIdx - 1].id : null;
     moveMutation.mutate({
       id: activeId,
-      boardColumnId: to,
-      sortOrder: (finalIdx + 1) * 1000,
+      targetColumnId: to,
+      afterTaskId: afterId,
     });
   };
 

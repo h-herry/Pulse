@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KeyRound, Search, Shield, Snowflake, Pencil, UserCog } from "lucide-react";
+import { KeyRound, Search, Shield, Snowflake, Pencil, UserCog, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/card";
@@ -83,6 +83,18 @@ function UsersTab() {
   const [editUser, setEditUser] = React.useState<User | null>(null);
   const [editName, setEditName] = React.useState("");
   const [editAvatar, setEditAvatar] = React.useState("");
+  /** 新增用户弹窗状态 */
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [newEmail, setNewEmail] = React.useState("");
+  const [newName, setNewName] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [newRole, setNewRole] = React.useState<SystemRole>("user");
+  const resetCreateForm = () => {
+    setNewEmail("");
+    setNewName("");
+    setNewPassword("");
+    setNewRole("user");
+  };
 
   const {
     data: users = [],
@@ -133,6 +145,22 @@ function UsersTab() {
     onError: (e: Error) => toast.error(e.message || "更新失败"),
   });
 
+  const createUser = useMutation({
+    mutationFn: (data: {
+      email: string;
+      displayName: string;
+      password: string;
+      role: SystemRole;
+    }) => adminApi.createUser(data),
+    onSuccess: () => {
+      toast.success("用户已创建");
+      setCreateOpen(false);
+      resetCreateForm();
+      void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "创建失败"),
+  });
+
   /* ---- derived ---- */
 
   const filtered = users.filter((u) => {
@@ -162,7 +190,7 @@ function UsersTab() {
   return (
     <Card className="overflow-hidden">
       {/* 搜索栏 */}
-      <div className="border-b border-hairline p-3">
+      <div className="flex items-center gap-2 border-b border-hairline p-3">
         <div className="relative w-56">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-fg-muted" />
           <Input
@@ -173,6 +201,15 @@ function UsersTab() {
             aria-label="搜索用户"
           />
         </div>
+        <Button
+          variant="primary"
+          size="sm"
+          className="ml-auto"
+          onClick={() => setCreateOpen(true)}
+        >
+          <UserPlus className="size-3.5" />
+          新增用户
+        </Button>
       </div>
 
       {/* 列表 */}
@@ -337,6 +374,97 @@ function UsersTab() {
               }
             >
               {updateProfile.isPending ? "保存中…" : "保存"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 新增用户弹窗 */}
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateOpen(false);
+            resetCreateForm();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="size-4.5" />
+            新增用户
+          </DialogTitle>
+
+          <div className="space-y-4 py-1">
+            <Field label="邮箱" hint="作为登录账号，创建后不可修改">
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="user@example.com"
+              />
+            </Field>
+
+            <Field label="显示名称">
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="输入显示名称"
+              />
+            </Field>
+
+            <Field label="初始密码" hint="至少 6 位；用户首次登录后需强制修改">
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="至少 6 位"
+              />
+            </Field>
+
+            <Field label="全局角色">
+              <Select
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value as SystemRole)}
+                aria-label="设置新增用户的全局角色"
+              >
+                {ROLE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t border-hairline">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setCreateOpen(false);
+                resetCreateForm();
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              disabled={
+                !newEmail.trim() ||
+                !newName.trim() ||
+                newPassword.trim().length < 6 ||
+                createUser.isPending
+              }
+              onClick={() =>
+                createUser.mutate({
+                  email: newEmail.trim(),
+                  displayName: newName.trim(),
+                  password: newPassword,
+                  role: newRole,
+                })
+              }
+            >
+              {createUser.isPending ? "创建中…" : "创建"}
             </Button>
           </div>
         </DialogContent>

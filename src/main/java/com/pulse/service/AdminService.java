@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pulse.common.BusinessException;
 import com.pulse.common.Role;
 import com.pulse.common.TenantContext;
+import com.pulse.dto.AdminCreateUserRequest;
 import com.pulse.entity.AuditLog;
 import com.pulse.entity.Project;
 import com.pulse.entity.Task;
@@ -197,6 +198,35 @@ public class AdminService {
     }
 
     // ===== R-014: 用户管理 =====
+
+    /**
+     * 管理员新增用户。
+     * 邮箱全局唯一（大小写不敏感），密码经 BCrypt 加密存储；默认启用账户，
+     * 并置 mustChangePassword=true 强制其首次登录后改密，避免临时明文密码长期滞留。
+     * 全局角色由 role 决定（admin=系统管理员，其余按普通用户处理）。
+     */
+    @Transactional
+    public User createUser(AdminCreateUserRequest req) {
+        verifyGlobalAdmin();
+        String email = req.getEmail().trim().toLowerCase();
+        if (userMapper.selectOne(
+                new LambdaQueryWrapper<User>().eq(User::getEmail, email)) != null) {
+            throw new BusinessException("该邮箱已存在");
+        }
+        User u = new User();
+        u.setEmail(email);
+        u.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        u.setDisplayName(req.getDisplayName().trim());
+        u.setEnabled(true);
+        u.setIsSystemAdmin("admin".equalsIgnoreCase(req.getRole()));
+        u.setMustChangePassword(true);
+        u.setTokenVersion(0);
+        userMapper.insert(u);
+        auditService.record(AuditLog.Action.ADMIN_USER_CREATE, null, AuditLog.Target.USER,
+                u.getId(), "新增用户：" + email + "（角色=" + ("admin".equalsIgnoreCase(req.getRole()) ? "管理员" : "普通用户") + "）");
+        u.setIsAdmin(u.getIsSystemAdmin());
+        return u;
+    }
 
     /**
      * 获取所有用户（含启用状态、是否系统管理员），按创建时间倒序。

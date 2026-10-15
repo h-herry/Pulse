@@ -1,6 +1,7 @@
 package com.pulse.controller;
 
 import com.pulse.common.Result;
+import com.pulse.dto.AdminCreateUserRequest;
 import com.pulse.dto.AdminUpdateProfileRequest;
 import com.pulse.dto.AdminUpdateRoleRequest;
 import com.pulse.entity.User;
@@ -84,6 +85,18 @@ public class AdminController {
     @Operation(summary = "获取所有用户列表（含启用状态）")
     public Result<List<User>> listUsers() {
         return Result.ok(adminService.listUsers());
+    }
+
+    /**
+     * 所需权限：系统管理员（hasRole('ADMIN')）。
+     * 功能：新增用户（邮箱 + 密码 + 显示名 + 可选全局角色）。
+     * 关键入参：body.email（必填，邮箱格式）、body.password（必填，≥6 位）、
+     *          body.displayName（必填）、body.role（可选，user/admin，默认 user）。
+     */
+    @PostMapping("/users")
+    @Operation(summary = "新增用户（管理员）")
+    public Result<User> createUser(@Valid @RequestBody AdminCreateUserRequest body) {
+        return Result.ok(adminService.createUser(body));
     }
 
     /**
